@@ -1,27 +1,41 @@
-var express = require('express');
-var app = express();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
+const express = require('express');
+const GameRepository = require('./logic/GameRepository');
 
-var games = [];
-var users = [];
+const app = express();
 
-app.use(express.static('public'));
+const server = require('http')
+    .createServer(app)
+    .listen("3000", (error) => {
+        console.log('====> SERVER ONLINE <====');
+    });
 
-app.get('/', function(req, res) {
-    res.status(200).send("Hello mundo!");
-})
+const path = require('path').resolve(__dirname, '../public');
+app.use( express.static( path ) );
 
-io.on('connection', function(socket) {
+const repository = new GameRepository();
+
+const io = require('socket.io')(server);
+io.on('connection', socket => {
     console.log("Alguien se conectó con sockets");
 
-    socket.on('login', (username) => {
+    socket.on('create_game', () => {
+        let gameId = repository.createGame();
+        socket.emit('create_game_result', gameId.toUpperCase());
+    });
+
+    socket.on('join_game', (gameId) => {
+        repository.joinGame(socket.id, gameId.toUpperCase());
+        let players = repository.getPlayers(gameId.toUpperCase());
+        io.emit('update_players_list', players);
+    });
+
+    /*socket.on('login', (username) => {
         let user = createUser(username);
         user.id = users.length;
         users.push(user);
 
         console.log(users);
-        io.sockets.emit('login', user;
+        io.sockets.emit('login', user);
     });
 
     socket.on('new_game', (name) => {
@@ -44,14 +58,9 @@ io.on('connection', function(socket) {
         console.log(round);
         io.sockets.emit('new_round', round);
     });
+    */
 })
-
-server.listen(8080, function() {
-    console.log("Servidor corriendo en 8080");
-})
-
-
-
+/*
 //Game
 function createGame(name) {
     let game = {
@@ -89,7 +98,7 @@ function createUser(username){
     }
 
     return user;
-}
+}*/
 
 //QUESTIONS ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
