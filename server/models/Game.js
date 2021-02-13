@@ -1,15 +1,14 @@
 const Player = require('./Player');
 
 class Game{
-    constructor(socketId){
+    constructor(){
         this.id = this.generateid();
-        this.owner = new Player(socketId);
+        this.owner = new Player();
         this.players = [];
         this.round;
     }
 
-    addPlayer(socketId){
-        let newPlayer = new Player(socketId);
+    addPlayer(newPlayer){
         this.players.push(newPlayer);
     }
 
@@ -18,7 +17,7 @@ class Game{
     }
 
     generateid() {
-        var length = 6;
+        var length = 2;
         var result           = '';
         var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         var charactersLength = characters.length;

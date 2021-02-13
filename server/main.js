@@ -18,87 +18,36 @@ const io = require('socket.io')(server);
 io.on('connection', socket => {
     console.log("Alguien se conectó con sockets");
 
+    //CREATE GAME
     socket.on('create_game', () => {
-        let gameId = repository.createGame();
+        let gameId = repository.createGame(socket.id);
         socket.emit('create_game_result', gameId.toUpperCase());
     });
 
+    //CREATE PLAYER
+    socket.on('create_player', (name) => {
+    repository.createPlayer(socket.id, name);
+    });
+
+    //JOIN GAME
     socket.on('join_game', (gameId) => {
-        repository.joinGame(socket.id, gameId.toUpperCase());
-        let players = repository.getPlayers(gameId.toUpperCase());
-        io.emit('update_players_list', players);
+        let fixedGameId = gameId.toUpperCase();
+        if(repository.existGame(fixedGameId)){
+            repository.joinGame(socket.id, fixedGameId);
+            let players = repository.getPlayers(fixedGameId);
+            let gameOwner = repository.getGameOwner(fixedGameId);
+            socket.broadcast.to(gameOwner).emit('update_players_list', players);
+            socket.emit('join_game_status', "OK");
+        }else{
+            socket.emit('join_game_status', "CANT_JOIN");
+        }
     });
 
-    /*socket.on('login', (username) => {
-        let user = createUser(username);
-        user.id = users.length;
-        users.push(user);
+    //START GAME
+    socket.on('start_game', (gameId) => {
 
-        console.log(users);
-        io.sockets.emit('login', user);
     });
-
-    socket.on('new_game', (name) => {
-        let game = createGame(name);
-        game.id = games.length;
-        games.push(game);
-
-        console.log(games);
-        io.sockets.emit('new_game', game);
-    });
-
-    socket.on('new_round', (gameId) => {
-        let round = createGame();
-        let question = questions[Math.floor(Math.random() * questions.length)];
-        round.question = question;
-
-        let game = games[id];
-        game.round = round;
-
-        console.log(round);
-        io.sockets.emit('new_round', round);
-    });
-    */
 })
-/*
-//Game
-function createGame(name) {
-    let game = {
-        id:0,
-        name: name,
-        user: {},
-        players: [],
-        round: {}
-    }
-
-    return game;
-}
-
-//Round
-function createRound() {
-    let round = {
-        id: 0,
-        question: "",
-        duration: 10,
-        reader: {},
-        winner: {},
-        winnerAnswer: "",
-        answers: []
-    }
-    
-    return round;
-}
-
-//User
-function createUser(username){
-    let user = {
-        id: 0,
-        username: username,
-        score:0
-    }
-
-    return user;
-}*/
 
 //QUESTIONS ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
