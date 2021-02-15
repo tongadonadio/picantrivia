@@ -9,5 +9,9 @@ class Round{
         this.answers = [];
         this.sentAnswers = [];
     }
+
+    addSentAnswer(answer){
+        this.sentAnswers.push(answer);
+    }
 }
 module.exports = Round;

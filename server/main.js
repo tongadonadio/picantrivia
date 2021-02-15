@@ -54,7 +54,35 @@ io.on('connection', socket => {
     socket.on('start_game', (gameId) => {
         let fixedGameId = gameId.toUpperCase();
         let round = repository.createRound(fixedGameId);
-        SocketHelper.sendMessageToEveryPlayer('start_round', fixedGameId, round)
+        SocketHelper.sendMessageToEveryPlayer('start_round', fixedGameId, round);
+    });
+
+    //PLAYER VOTE
+    socket.on('player_vote', (voteData) => {
+        var stringData = JSON.stringify(voteData);
+        var objectValue = JSON.parse(stringData);
+        let answer = objectValue['answer'];
+        let gameId = objectValue['gameId'];
+        repository.playerVote(socket.id, answer, gameId);
+        let readerId = repository.getReaderId(gameId);
+        let sentAnswers = repository.getSentAnswers(gameId).map(function(x) {
+            return x.sentAnswer;
+         });
+        
+        //TODO: La siguiente linea deberia llamarse cuando esten todas las respuestas listas
+        SocketHelper.sendMessageToOnePlayer('round_sent_answers', readerId, sentAnswers);
+        
+    });
+
+    //READER VOTE
+    socket.on('reader_vote', (voteData) => {
+        var stringData = JSON.stringify(voteData);
+        var objectValue = JSON.parse(stringData);
+        let answer = objectValue['answer'];
+        let gameId = objectValue['gameId'];
+        let result =  repository.readerVote(socket.id, answer, gameId);
+        let fixedGameId = gameId.toUpperCase();
+        SocketHelper.sendMessageToEveryPlayer('round_result', fixedGameId, result);
     });
 })
 
@@ -65,8 +93,11 @@ class SocketHelper {
         players.forEach(
                 player => {
                     io.sockets.connected[player.id].emit(eventName, object)
-                    console.log("Start round => " + player.id);
                 }
         )
+    }
+
+    static sendMessageToOnePlayer(eventName, socketId, object) {
+        io.sockets.connected[socketId].emit(eventName, object)
     }
 }

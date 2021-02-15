@@ -1,6 +1,7 @@
 const Game = require('../models/Game');
 const Player = require('../models/Player');
-const Round = require('../models/Round');
+const RoundResult = require('../models/RoundResult');
+const SentAnswer = require('../models/SentAnswer');
 
 class GameRepository{
 
@@ -61,6 +62,29 @@ class GameRepository{
 
     removePlayer(socketId){
         this.players = this.players.filter(x => x.id !== socketId);
+    }
+
+    playerVote(socketId, answer, gameId){
+        let game = this.games.find(x => x.id === gameId);
+        let sentAnswer = new SentAnswer(socketId, answer);
+        game.round.addSentAnswer(sentAnswer)
+    }
+
+    readerVote(socketId, answer, gameId){
+        let game = this.games.find(x => x.id === gameId);
+        let roundWinner = game.getPlayers().find(x => x.id === socketId);
+        roundWinner.score = roundWinner.score + 1;
+        return new RoundResult(game.round.question, roundWinner, answer, game.getPlayers());
+    }
+
+    getReaderId(gameId){
+        let game = this.games.find(x => x.id === gameId);
+        return game.round.reader.id;
+    }
+
+    getSentAnswers(gameId){
+        let game = this.games.find(x => x.id === gameId);
+        return game.round.sentAnswers;
     }
 
 }
