@@ -1,15 +1,29 @@
 const Player = require('./Player');
+const Round = require('./Round');
+const RoundResult = require('./RoundResult');
 
 class Game{
     constructor(){
         this.id = this.generateid();
         this.owner = new Player();
         this.players = [];
-        this.round;
+        this.currentRoundId = 0;
+        this.round = new Round(this.currentRoundId);
+        this.roundResult = new RoundResult();
     }
 
     addPlayer(newPlayer){
         this.players.push(newPlayer);
+    }
+
+    createRound(question, answers){
+        this.currentRoundId = this.currentRoundId + 1;
+        let newRound = new Round(this.currentRoundId);
+        newRound.question = question;
+        newRound.answers = answers;
+        newRound.reader = this.players[0];
+        this.round = newRound;
+        return newRound;
     }
 
     getPlayers(){

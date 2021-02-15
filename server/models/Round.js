@@ -1,12 +1,13 @@
+const Player = require("./Player");
+
 class Round{
-    constructor(id = currentId){
-        this.id = currentId;
+    constructor(roundId){
+        this.id = roundId;
         this.question = "";
-        this.duration = 20;
-        this.reader = 0;
-        this.winner = 0;
-        this.winnerAnswer = 0;
+        this.duration = 10000;
+        this.reader = new Player();
         this.answers = [];
+        this.sentAnswers = [];
     }
 }
 module.exports = Round;
