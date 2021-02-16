@@ -70,9 +70,10 @@ class GameRepository{
         game.round.addSentAnswer(sentAnswer)
     }
 
-    readerVote(socketId, answer, gameId){
+    readerVote(answer, gameId){
         let game = this.games.find(x => x.id === gameId);
-        let roundWinner = game.getPlayers().find(x => x.id === socketId);
+        let roundWinnerId = game.round.sentAnswers.find(x => x.sentAnswer === answer).playerId;
+        let roundWinner = game.getPlayers().find(x => x.id === roundWinnerId);
         roundWinner.score = roundWinner.score + 1;
         return new RoundResult(game.round.question, roundWinner, answer, game.getPlayers());
     }
@@ -87,6 +88,10 @@ class GameRepository{
         return game.round.sentAnswers;
     }
 
+    isGameOver(gameId){
+        let game = this.games.find(x => x.id === gameId);
+        return game.isGameOver(game.id);
+    }
 }
 
 const questions = [

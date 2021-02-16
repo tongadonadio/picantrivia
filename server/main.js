@@ -80,12 +80,21 @@ io.on('connection', socket => {
         var objectValue = JSON.parse(stringData);
         let answer = objectValue['answer'];
         let gameId = objectValue['gameId'];
-        let result =  repository.readerVote(socket.id, answer, gameId);
         let fixedGameId = gameId.toUpperCase();
-        SocketHelper.sendMessageToEveryPlayer('round_result', fixedGameId, result);
-    });
-})
+        let roundResult =  repository.readerVote(answer, fixedGameId);
 
+        if (repository.isGameOver(fixedGameId)) {
+            SocketHelper.sendMessageToEveryPlayer('game_over', fixedGameId, roundResult);
+        } else {
+            SocketHelper.sendMessageToEveryPlayer('round_result', fixedGameId, roundResult);
+            setTimeout(() => {
+                let fixedGameId = gameId.toUpperCase();
+                let round = repository.createRound(fixedGameId);
+                SocketHelper.sendMessageToEveryPlayer('start_round', fixedGameId, round);
+            }, 5000);
+        }
+    });
+});
 
 class SocketHelper {
     static sendMessageToEveryPlayer(eventName, gameId, object) {

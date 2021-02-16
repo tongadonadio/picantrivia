@@ -1,6 +1,7 @@
 const Player = require('./Player');
 const Round = require('./Round');
 const RoundResult = require('./RoundResult');
+const MAX_SCORE = 2;
 
 class Game{
     constructor(){
@@ -28,6 +29,10 @@ class Game{
 
     getPlayers(){
         return this.players;
+    }
+
+    isGameOver(){
+        return this.players.find(x => x.score === MAX_SCORE) != null;
     }
 
     generateid() {
