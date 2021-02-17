@@ -22,6 +22,7 @@ io.on('connection', socket => {
     //PLAYER DISCONNECTED
     socket.on('disconnect', () => {
         repository.removePlayer(socket.id);
+        console.log("Player disconnected => " + socket.id);
     });
 
     //CREATE GAME
@@ -53,8 +54,13 @@ io.on('connection', socket => {
     //START GAME
     socket.on('start_game', (gameId) => {
         let fixedGameId = gameId.toUpperCase();
-        let round = repository.createRound(fixedGameId);
-        SocketHelper.sendMessageToEveryPlayer('start_round', fixedGameId, round);
+        repository.createRound(fixedGameId);
+        let roundsList = repository.getCurrentRoundForPlayers(fixedGameId);
+        roundsList.forEach(
+            round => {
+                SocketHelper.sendMessageToOnePlayer('start_round', round.playerId, round);
+            }
+        )
     });
 
     //PLAYER VOTE
@@ -76,6 +82,7 @@ io.on('connection', socket => {
 
     //READER VOTE
     socket.on('reader_vote', (voteData) => {
+        const START_ROUND_DELAY = 5000;
         var stringData = JSON.stringify(voteData);
         var objectValue = JSON.parse(stringData);
         let answer = objectValue['answer'];
@@ -85,13 +92,19 @@ io.on('connection', socket => {
 
         if (repository.isGameOver(fixedGameId)) {
             SocketHelper.sendMessageToEveryPlayer('game_over', fixedGameId, roundResult);
+            repository.removeGame(fixedGameId);
         } else {
             SocketHelper.sendMessageToEveryPlayer('round_result', fixedGameId, roundResult);
             setTimeout(() => {
                 let fixedGameId = gameId.toUpperCase();
-                let round = repository.createRound(fixedGameId);
-                SocketHelper.sendMessageToEveryPlayer('start_round', fixedGameId, round);
-            }, 5000);
+                repository.createRound(fixedGameId);
+                let roundsList = repository.getCurrentRoundForPlayers(fixedGameId);
+                roundsList.forEach(
+                    round => {
+                        SocketHelper.sendMessageToOnePlayer('start_round', round.playerId, round);
+                    }
+                )
+            }, START_ROUND_DELAY);
         }
     });
 });

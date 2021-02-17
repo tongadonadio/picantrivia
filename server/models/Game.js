@@ -1,6 +1,9 @@
 const Player = require('./Player');
 const Round = require('./Round');
 const RoundResult = require('./RoundResult');
+const PlayerRound = require('./PlayerRound');
+const QuestionsAndAnswersRepository = require('../logic/QuestionsAndAnswersRepository');
+
 const MAX_SCORE = 2;
 
 class Game{
@@ -22,9 +25,23 @@ class Game{
         let newRound = new Round(this.currentRoundId);
         newRound.question = question;
         newRound.answers = answers;
-        newRound.reader = this.players[0];
+        newRound.reader = this.players[Math.floor(Math.random() * this.players.length)];
         this.round = newRound;
         return newRound;
+    }
+
+    getCustomRoundForEachPlayer(){
+        let result = [];
+        let answersQuantity = QuestionsAndAnswersRepository.ANSWERS_QUANTITY;
+        for (var i = 0; i < this.players.length; i++) {
+            let newRound = new PlayerRound(this.currentRoundId);
+            newRound.question = this.round.question;
+            newRound.answers = this.round.answers.slice(i * answersQuantity, (i + 1) * answersQuantity);
+            newRound.playerId = this.players[i].id;
+            newRound.reader = this.round.reader;
+            result.push(newRound);    
+        }
+        return result;
     }
 
     getPlayers(){
@@ -38,7 +55,7 @@ class Game{
     generateid() {
         var length = 2;
         var result           = '';
-        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        var characters       = 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789';
         var charactersLength = characters.length;
         for ( var i = 0; i < length; i++ ) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
