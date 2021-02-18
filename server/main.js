@@ -1,6 +1,7 @@
 const { Console } = require('console');
 const express = require('express');
 const GameRepository = require('./logic/GameRepository');
+const GameConstants = require('./logic/GameConstants');
 
 const app = express();
 
@@ -54,13 +55,7 @@ io.on('connection', socket => {
     //START GAME
     socket.on('start_game', (gameId) => {
         let fixedGameId = gameId.toUpperCase();
-        repository.createRound(fixedGameId);
-        let roundsList = repository.getCurrentRoundForPlayers(fixedGameId);
-        roundsList.forEach(
-            round => {
-                SocketHelper.sendMessageToOnePlayer('start_round', round.playerId, round);
-            }
-        )
+        GameLogicHelper.startRound(fixedGameId);
     });
 
     //PLAYER VOTE
@@ -70,25 +65,16 @@ io.on('connection', socket => {
         let answer = objectValue['answer'];
         let gameId = objectValue['gameId'];
         repository.playerVote(socket.id, answer, gameId);
-        let readerId = repository.getReaderId(gameId);
-        let sentAnswers = repository.getSentAnswers(gameId).map(function(x) {
-            return x.sentAnswer;
-         });
-        
-        //TODO: La siguiente linea deberia llamarse cuando esten todas las respuestas listas
-        SocketHelper.sendMessageToOnePlayer('round_sent_answers', readerId, sentAnswers);
-        
     });
 
     //READER VOTE
     socket.on('reader_vote', (voteData) => {
-        const START_ROUND_DELAY = 5000;
         var stringData = JSON.stringify(voteData);
         var objectValue = JSON.parse(stringData);
         let answer = objectValue['answer'];
         let gameId = objectValue['gameId'];
         let fixedGameId = gameId.toUpperCase();
-        let roundResult =  repository.readerVote(answer, fixedGameId);
+        let roundResult =  repository.getRoundResult(answer, fixedGameId);
 
         if (repository.isGameOver(fixedGameId)) {
             SocketHelper.sendMessageToEveryPlayer('game_over', fixedGameId, roundResult);
@@ -96,18 +82,42 @@ io.on('connection', socket => {
         } else {
             SocketHelper.sendMessageToEveryPlayer('round_result', fixedGameId, roundResult);
             setTimeout(() => {
-                let fixedGameId = gameId.toUpperCase();
-                repository.createRound(fixedGameId);
-                let roundsList = repository.getCurrentRoundForPlayers(fixedGameId);
-                roundsList.forEach(
-                    round => {
-                        SocketHelper.sendMessageToOnePlayer('start_round', round.playerId, round);
-                    }
-                )
-            }, START_ROUND_DELAY);
+                GameLogicHelper.startRound(fixedGameId);
+            }, GameConstants.START_ROUND_DELAY);
         }
     });
 });
+
+class GameLogicHelper {
+    static startRound(gameId) {
+        repository.createRound(gameId);
+        let roundsList = repository.getCurrentRoundForPlayers(gameId);
+        roundsList.forEach(
+            round => {
+                SocketHelper.sendMessageToOnePlayer('start_round', round.playerId, round);
+            }
+        )
+        setTimeout(() => {
+            let readerId = repository.getReaderId(gameId);
+            let sentAnswers = repository.getSentAnswers(gameId).map(function(x) {
+                return x.sentAnswer;
+            });
+            SocketHelper.sendMessageToOnePlayer('round_sent_answers', readerId, sentAnswers);
+
+            if(sentAnswers.length === 0){
+                setTimeout(() => {
+                    let roundResult =  repository.getRoundResult(null, gameId);
+                    SocketHelper.sendMessageToEveryPlayer('round_result', gameId, roundResult);
+                    
+                    setTimeout(() => {
+                        GameLogicHelper.startRound(gameId);
+                    }, GameConstants.START_ROUND_DELAY);
+                
+                }, GameConstants.START_ROUND_DELAY);
+            }
+        }, roundsList[0].duration);
+    }
+}
 
 class SocketHelper {
     static sendMessageToEveryPlayer(eventName, gameId, object) {

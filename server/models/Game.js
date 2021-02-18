@@ -3,6 +3,7 @@ const Round = require('./Round');
 const RoundResult = require('./RoundResult');
 const PlayerRound = require('./PlayerRound');
 const QuestionsAndAnswersRepository = require('../logic/QuestionsAndAnswersRepository');
+const GameConstants = require('../logic/GameConstants');
 
 const MAX_SCORE = 2;
 
@@ -32,10 +33,11 @@ class Game{
 
     getCustomRoundForEachPlayer(){
         let result = [];
-        let answersQuantity = QuestionsAndAnswersRepository.ANSWERS_QUANTITY;
+        let answersQuantity = GameConstants.ANSWERS_QUANTITY;
         for (var i = 0; i < this.players.length; i++) {
             let newRound = new PlayerRound(this.currentRoundId);
             newRound.question = this.round.question;
+            newRound.duration = this.round.duration;
             newRound.answers = this.round.answers.slice(i * answersQuantity, (i + 1) * answersQuantity);
             newRound.playerId = this.players[i].id;
             newRound.reader = this.round.reader;

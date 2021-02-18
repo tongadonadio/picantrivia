@@ -80,12 +80,17 @@ class GameRepository{
         game.round.addSentAnswer(sentAnswer)
     }
 
-    readerVote(answer, gameId){
+
+    getRoundResult(answer, gameId){
         let game = this.games.find(x => x.id === gameId);
-        let roundWinnerId = game.round.sentAnswers.find(x => x.sentAnswer === answer).playerId;
-        let roundWinner = game.getPlayers().find(x => x.id === roundWinnerId);
-        roundWinner.score = roundWinner.score + 1;
-        return new RoundResult(game.round.question, roundWinner, answer, game.getPlayers());
+        if(answer != null){
+            let roundWinnerId = game.round.sentAnswers.find(x => x.sentAnswer === answer).playerId;
+            let roundWinner = game.getPlayers().find(x => x.id === roundWinnerId);
+            roundWinner.score = roundWinner.score + 1;
+            return new RoundResult(game.round.question, roundWinner, answer, game.getPlayers());
+        } else {
+            return new RoundResult(game.round.question, null, "", game.getPlayers());
+        }
     }
 
     getReaderId(gameId){

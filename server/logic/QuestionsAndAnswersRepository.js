@@ -1,6 +1,6 @@
-class QuestionsAndAnswersRepository{
+const GameConstants = require('./GameConstants');
 
-    static ANSWERS_QUANTITY = 6;
+class QuestionsAndAnswersRepository{
 
     static getQuestion(){
         return this.questions[Math.floor(Math.random() * this.questions.length)];
@@ -8,7 +8,7 @@ class QuestionsAndAnswersRepository{
 
     static getAnswers(playersQuantity){
         let result = [];
-        for (var i = 0; i < playersQuantity * this.ANSWERS_QUANTITY; i++) {
+        for (var i = 0; i < playersQuantity * GameConstants.ANSWERS_QUANTITY; i++) {
             result.push(this.answers[Math.floor(Math.random() * this.answers.length)])    
         }
         return result;
